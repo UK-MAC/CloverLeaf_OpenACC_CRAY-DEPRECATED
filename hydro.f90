@@ -41,6 +41,48 @@ SUBROUTINE hydro
 
   timerstart = timer()
 
+!$ACC DATA &
+!$ACC COPYIN(chunks(parallel%task+1)%field%density0)   &
+!$ACC COPYIN(chunks(parallel%task+1)%field%density1)   &
+!$ACC COPYIN(chunks(parallel%task+1)%field%energy0)    &
+!$ACC COPYIN(chunks(parallel%task+1)%field%energy1)    &
+!$ACC COPYIN(chunks(parallel%task+1)%field%pressure)   &
+!$ACC COPYIN(chunks(parallel%task+1)%field%soundspeed) &
+!$ACC COPYIN(chunks(parallel%task+1)%field%viscosity)  &
+!$ACC COPYIN(chunks(parallel%task+1)%field%xvel0)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%yvel0)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%xvel1)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%yvel1)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vol_flux_x) &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vol_flux_y) &
+!$ACC COPYIN(chunks(parallel%task+1)%field%mass_flux_x)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%mass_flux_y)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%volume)     &
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array1)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array2)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array3)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array4)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array5)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array6)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%work_array7)&
+!$ACC COPYIN(chunks(parallel%task+1)%field%cellx)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%celly)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%celldx)     &
+!$ACC COPYIN(chunks(parallel%task+1)%field%celldy)     &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vertexx)    &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vertexdx)   &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vertexy)    &
+!$ACC COPYIN(chunks(parallel%task+1)%field%vertexdy)   &
+!$ACC COPYIN(chunks(parallel%task+1)%field%xarea)      &
+!$ACC COPYIN(chunks(parallel%task+1)%field%yarea)      &
+!$ACC COPY(chunks(parallel%task+1)%left_snd_buffer)    &
+!$ACC COPY(chunks(parallel%task+1)%left_rcv_buffer)    &
+!$ACC COPY(chunks(parallel%task+1)%right_snd_buffer)   &
+!$ACC COPY(chunks(parallel%task+1)%right_rcv_buffer)   &
+!$ACC COPY(chunks(parallel%task+1)%bottom_snd_buffer)  &
+!$ACC COPY(chunks(parallel%task+1)%bottom_rcv_buffer)  &
+!$ACC COPY(chunks(parallel%task+1)%top_snd_buffer)     &
+!$ACC COPY(chunks(parallel%task+1)%top_rcv_buffer)
   DO
 
     step_time = timer()
@@ -106,5 +148,6 @@ SUBROUTINE hydro
      END IF
 
   END DO
+!$ACC END DATA
 
 END SUBROUTINE hydro

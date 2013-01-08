@@ -47,9 +47,10 @@ SUBROUTINE viscosity_kernel(x_min,x_max,y_min,y_max,    &
   REAL(KIND=8)  :: ugrad,vgrad,grad2,pgradx,pgrady,pgradx2,pgrady2,grad     &
                   ,ygrad,pgrad,xgrad,div,strain2,limiter
 
-!$OMP PARALLEL
+!$ACC DATA &
+!$ACC PRESENT(celldx,celldy,density0,pressure,xvel0,yvel0,viscosity)
 
-!$OMP DO PRIVATE(ugrad,vgrad,div,strain2,pgradx,pgrady,pgradx2,pgrady2,limiter,pgrad,xgrad,ygrad,grad,grad2)
+!$ACC PARALLEL LOOP PRIVATE(ugrad,vgrad,div,strain2,pgradx,pgrady,pgradx2,pgrady2,limiter,pgrad,xgrad,ygrad,grad,grad2)
   DO k=y_min,y_max
     DO j=x_min,x_max
       ugrad=(xvel0(j+1,k  )+xvel0(j+1,k+1))-(xvel0(j  ,k  )+xvel0(j  ,k+1))
@@ -86,9 +87,9 @@ SUBROUTINE viscosity_kernel(x_min,x_max,y_min,y_max,    &
 
     ENDDO
   ENDDO
-!$OMP END DO
+!$ACC END PARALLEL LOOP
 
-!$OMP END PARALLEL
+!$ACC END DATA
 
 END SUBROUTINE viscosity_kernel
 

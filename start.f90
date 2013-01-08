@@ -96,6 +96,41 @@ SUBROUTINE start
     ENDIF
   ENDDO
 
+!$ACC DATA &
+!$ACC COPY(chunks(parallel%task+1)%field%density0)    &
+!$ACC COPY(chunks(parallel%task+1)%field%density1)    &
+!$ACC COPY(chunks(parallel%task+1)%field%energy0)     &
+!$ACC COPY(chunks(parallel%task+1)%field%energy1)     &
+!$ACC COPY(chunks(parallel%task+1)%field%pressure)    &
+!$ACC COPY(chunks(parallel%task+1)%field%soundspeed)  &
+!$ACC COPY(chunks(parallel%task+1)%field%viscosity)   &
+!$ACC COPY(chunks(parallel%task+1)%field%xvel0)       &
+!$ACC COPY(chunks(parallel%task+1)%field%yvel0)       &
+!$ACC COPY(chunks(parallel%task+1)%field%xvel1)       &
+!$ACC COPY(chunks(parallel%task+1)%field%yvel1)       &
+!$ACC COPY(chunks(parallel%task+1)%field%vol_flux_x)  &
+!$ACC COPY(chunks(parallel%task+1)%field%vol_flux_y)  &
+!$ACC COPY(chunks(parallel%task+1)%field%mass_flux_x) &
+!$ACC COPY(chunks(parallel%task+1)%field%mass_flux_y) &
+!$ACC COPY(chunks(parallel%task+1)%field%volume)      &
+!$ACC COPY(chunks(parallel%task+1)%field%cellx)       &
+!$ACC COPY(chunks(parallel%task+1)%field%celly)       &
+!$ACC COPY(chunks(parallel%task+1)%field%celldx)      &
+!$ACC COPY(chunks(parallel%task+1)%field%celldy)      &
+!$ACC COPY(chunks(parallel%task+1)%field%vertexx)     &
+!$ACC COPY(chunks(parallel%task+1)%field%vertexdx)    &
+!$ACC COPY(chunks(parallel%task+1)%field%vertexy)     &
+!$ACC COPY(chunks(parallel%task+1)%field%vertexdy)    &
+!$ACC COPY(chunks(parallel%task+1)%field%xarea)       &
+!$ACC COPY(chunks(parallel%task+1)%field%yarea)       &
+!$ACC COPY(chunks(parallel%task+1)%left_snd_buffer)   &
+!$ACC COPY(chunks(parallel%task+1)%left_rcv_buffer)   &
+!$ACC COPY(chunks(parallel%task+1)%right_snd_buffer)  &
+!$ACC COPY(chunks(parallel%task+1)%right_rcv_buffer)  &
+!$ACC COPY(chunks(parallel%task+1)%bottom_snd_buffer) &
+!$ACC COPY(chunks(parallel%task+1)%bottom_rcv_buffer) &
+!$ACC COPY(chunks(parallel%task+1)%top_snd_buffer)    &
+!$ACC COPY(chunks(parallel%task+1)%top_rcv_buffer)
   DO c=1,number_of_chunks
     IF(chunks(c)%task.EQ.parallel%task)THEN
       CALL initialise_chunk(c)
@@ -143,6 +178,7 @@ SUBROUTINE start
   CALL field_summary()
 
   IF(visit_frequency.NE.0) CALL visit()
+!$ACC END DATA
 
   CALL clover_barrier
 

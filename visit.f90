@@ -88,6 +88,24 @@ SUBROUTINE visit
 
   ENDIF
 
+!$ACC DATA &
+!$ACC PRESENT(chunks(parallel%task+1)%field%density0)  &
+!$ACC PRESENT(chunks(parallel%task+1)%field%energy0)   &
+!$ACC PRESENT(chunks(parallel%task+1)%field%pressure)  &
+!$ACC PRESENT(chunks(parallel%task+1)%field%viscosity) &
+!$ACC PRESENT(chunks(parallel%task+1)%field%xvel0)     &
+!$ACC PRESENT(chunks(parallel%task+1)%field%yvel0)     &
+!$ACC PRESENT(chunks(parallel%task+1)%field%vertexx)   &
+!$ACC PRESENT(chunks(parallel%task+1)%field%vertexy)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%density0)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%energy0)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%pressure)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%viscosity)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%xvel0)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%yvel0)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%vertexx)
+!$ACC UPDATE HOST(chunks(parallel%task+1)%field%vertexy)
+!$ACC END DATA
   DO c = 1, number_of_chunks
     IF(chunks(c)%task.EQ.parallel%task) THEN
       nxc=chunks(c)%field%x_max-chunks(c)%field%x_min+1
