@@ -65,6 +65,7 @@ SUBROUTINE PdV_kernel(predict,                                          &
 
 !$ACC DATA &
 !$ACC PRESENT(density0,energy0,pressure,viscosity,volume,xarea,xvel0,yarea,yvel0) &
+!$ACC PRESENT(xvel1,yvel1) &
 !$ACC PRESENT(density1,energy1) &
 !$ACC PRESENT(volume_change)
 
