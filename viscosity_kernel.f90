@@ -16,7 +16,7 @@
 ! CloverLeaf. If not, see http://www.gnu.org/licenses/.
 
 !>  @brief Fortran viscosity kernel.
-!>  @author Wayne Gaudin
+!>  @author Wayne Gaudin, Andy Herdman
 !>  @details Calculates an artificial viscosity using the Wilkin's method to
 !>  smooth out shock front and prevent oscillations around discontinuities.
 !>  Only cells in compression will have a non-zero value.

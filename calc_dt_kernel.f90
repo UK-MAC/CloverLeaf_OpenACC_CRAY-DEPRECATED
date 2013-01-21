@@ -16,7 +16,7 @@
 ! CloverLeaf. If not, see http://www.gnu.org/licenses/.
 
 !>  @brief Fortran timestep kernel
-!>  @author Wayne Gaudin
+!>  @author Wayne Gaudin, Andy Herdman
 !>  @details Calculates the minimum timestep on the mesh chunk based on the CFL
 !>  condition, the velocity gradient and the velocity divergence. A safety
 !>  factor is used to ensure numerical stability.

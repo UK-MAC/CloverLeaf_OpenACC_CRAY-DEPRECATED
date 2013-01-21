@@ -16,7 +16,7 @@
 ! CloverLeaf. If not, see http://www.gnu.org/licenses/.
 
 !>  @brief Fortran momentum advection kernel
-!>  @author Wayne Gaudin
+!>  @author Wayne Gaudin, Andy Herdman
 !>  @details Performs a second order advective remap on the vertex momentum
 !>  using van-Leer limiting and directional splitting.
 !>  Note that although pre_vol is only set and not used in the update, please
