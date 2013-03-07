@@ -117,7 +117,7 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
     ENDDO
   ENDDO
 !$ACC END PARALLEL LOOP
-!!$ACC WAIT
+!$ACC WAIT
 
 !$ACC END DATA
 
