@@ -59,6 +59,7 @@ SUBROUTINE clover_finalize
 
   INTEGER :: err
 
+  CLOSE(g_out)
   CALL FLUSH(0)
   CALL FLUSH(6)
   CALL FLUSH(g_out)
@@ -113,10 +114,10 @@ SUBROUTINE clover_decompose(x_cells,y_cells,left,right,bottom,top)
 
   IMPLICIT NONE
 
-  INTEGER :: x_cells,y_cells,left(:),right(:),top(:),bottom(:),dims(2)
+  INTEGER :: x_cells,y_cells,left(:),right(:),top(:),bottom(:)
   INTEGER :: c,delta_x,delta_y
 
-  REAL(KIND=8) :: mesh_ratio,a,b,factor_x,factor_y
+  REAL(KIND=8) :: mesh_ratio,factor_x,factor_y
   INTEGER  :: chunk_x,chunk_y,mod_x,mod_y,split_found
 
   INTEGER  :: cx,cy,chunk,add_x,add_y,add_x_prev,add_y_prev
@@ -202,7 +203,7 @@ SUBROUTINE clover_allocate_buffers(chunk)
   IMPLICIT NONE
 
   INTEGER      :: chunk
-
+  
   ! Unallocated buffers for external boundaries caused issues on some systems so they are now
   !  all allocated
   IF(parallel%task.EQ.chunks(chunk)%task)THEN
@@ -452,7 +453,7 @@ SUBROUTINE clover_exchange_message(chunk,field,                            &
 
   INTEGER      :: chunk,depth,field_type
 
-  INTEGER      :: size,err,target,request(8),tag,message_count,j,k,x_inc,y_inc,index
+  INTEGER      :: size,err,request(8),tag,message_count,j,k,x_inc,y_inc,index
   INTEGER      :: status(MPI_STATUS_SIZE,8)
   INTEGER      :: receiver,sender
 
@@ -503,8 +504,8 @@ loc_y_max=chunks(chunk)%field%y_max
 
   ! Pack real data into buffers
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
+    size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
     IF(chunks(chunk)%chunk_neighbours(chunk_left).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
 !$ACC DATA &
 !$ACC PRESENT(left_snd_buffer,field)
 !$ACC PARALLEL LOOP ASYNC(1)
@@ -519,7 +520,6 @@ loc_y_max=chunks(chunk)%field%y_max
 !$ACC END DATA
 endif
      IF(chunks(chunk)%chunk_neighbours(chunk_right).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
 !$ACC DATA &
 !$ACC PRESENT(right_snd_buffer,field)
 !$ACC PARALLEL LOOP ASYNC(2)
@@ -603,8 +603,8 @@ endif
   message_count=0
 
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
+    size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
     IF(chunks(chunk)%chunk_neighbours(chunk_bottom).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
 !$ACC DATA &
 !$ACC PRESENT(bottom_snd_buffer,field)
 !$ACC PARALLEL LOOP
@@ -629,7 +629,6 @@ endif
     ENDIF
 
     IF(chunks(chunk)%chunk_neighbours(chunk_top).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
 !$ACC DATA &
 !$ACC PRESENT(top_snd_buffer,field)
 !$ACC PARALLEL LOOP
@@ -727,6 +726,40 @@ SUBROUTINE clover_min(value)
   value=minimum
 
 END SUBROUTINE clover_min
+
+SUBROUTINE clover_max(value)
+
+  IMPLICIT NONE
+
+  REAL(KIND=8) :: value
+
+  REAL(KIND=8) :: maximum
+
+  INTEGER :: err
+
+  maximum=value
+
+  CALL MPI_ALLREDUCE(value,maximum,1,MPI_DOUBLE_PRECISION,MPI_MAX,MPI_COMM_WORLD,err)
+
+  value=maximum
+
+END SUBROUTINE clover_max
+
+SUBROUTINE clover_allgather(value,values)
+
+  IMPLICIT NONE
+
+  REAL(KIND=8) :: value
+
+  REAL(KIND=8) :: values(parallel%max_task)
+
+  INTEGER :: err
+
+  values(1)=value ! Just to ensure it will work in serial
+
+  CALL MPI_ALLGATHER(value,1,MPI_DOUBLE_PRECISION,values,1,MPI_DOUBLE_PRECISION,MPI_COMM_WORLD,err)
+
+END SUBROUTINE clover_allgather
 
 SUBROUTINE clover_check_error(error)
 

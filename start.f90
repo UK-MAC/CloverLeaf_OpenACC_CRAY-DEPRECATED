@@ -38,6 +38,8 @@ SUBROUTINE start
 
   INTEGER :: fields(NUM_FIELDS)
 
+  LOGICAL :: profiler_off
+
   IF(parallel%boss)THEN
      WRITE(g_out,*) 'Setting up initial geometry'
      WRITE(g_out,*)
@@ -151,6 +153,11 @@ SUBROUTINE start
 
   CALL clover_barrier
 
+  ! Do no profile the start up costs otherwise the total times will not add up
+  ! at the end
+  profiler_off=profiler_on
+  profiler_on=.FALSE.
+
   DO c = 1, number_of_chunks
     CALL ideal_gas(c,.FALSE.)
   END DO
@@ -181,5 +188,7 @@ SUBROUTINE start
 !$ACC END DATA
 
   CALL clover_barrier
+
+  profiler_on=profiler_off
 
 END SUBROUTINE start
