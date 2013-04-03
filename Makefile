@@ -198,7 +198,6 @@ c_lover: *.c Makefile
 	advec_mom_kernel_c.c            \
 	advec_cell_kernel_c.c           \
 	calc_dt_kernel_c.c		\
-	salc_dt_kernel_c.c              \
 	field_summary_kernel_c.c	\
 	update_halo_kernel_c.c		\
 	pack_kernel_c.c			\
