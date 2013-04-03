@@ -138,7 +138,7 @@ SUBROUTINE pack_top_bottom_buffers(x_min,x_max,y_min,y_max,              &
   IF(chunk_bottom.NE.external_face) THEN
 !$ACC DATA &
 !$ACC PRESENT(bottom_snd_buffer,field)
-!$ACC PARALLEL LOOP PRIVATE(index)
+!$ACC PARALLEL LOOP PRIVATE(index) ASYNC(5)
     DO j=x_min-depth,x_max+x_inc+depth
       DO k=1,depth
         index=j+depth+(k-1)*(x_max+x_inc+(2*depth))
@@ -146,13 +146,13 @@ SUBROUTINE pack_top_bottom_buffers(x_min,x_max,y_min,y_max,              &
       ENDDO
     ENDDO
 !$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (bottom_snd_buffer(1:size))
+!$ACC UPDATE HOST (bottom_snd_buffer(1:size)) ASYNC(5)
 !$ACC END DATA
   ENDIF
   IF(chunk_top.NE.external_face) THEN
 !$ACC DATA &
 !$ACC PRESENT(top_snd_buffer,field)
-!$ACC PARALLEL LOOP PRIVATE(index)
+!$ACC PARALLEL LOOP PRIVATE(index) ASYNC(6)
     DO j=x_min-depth,x_max+x_inc+depth
       DO k=1,depth
         index=j+depth+(k-1)*(x_max+x_inc+(2*depth))
@@ -160,9 +160,10 @@ SUBROUTINE pack_top_bottom_buffers(x_min,x_max,y_min,y_max,              &
       ENDDO
     ENDDO
 !$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (top_snd_buffer(1:size))
+!$ACC UPDATE HOST (top_snd_buffer(1:size)) ASYNC(6)
 !$ACC END DATA
   ENDIF
+!$ACC WAIT
 
 END SUBROUTINE pack_top_bottom_buffers
 
@@ -185,8 +186,8 @@ SUBROUTINE unpack_top_bottom_buffers(x_min,x_max,y_min,y_max,             &
   IF(chunk_bottom.NE.external_face) THEN
 !$ACC DATA &
 !$ACC PRESENT(bottom_rcv_buffer,field)
-!$ACC UPDATE DEVICE (bottom_rcv_buffer(1:size))
-!$ACC PARALLEL LOOP PRIVATE(index)
+!$ACC UPDATE DEVICE (bottom_rcv_buffer(1:size)) ASYNC(7)
+!$ACC PARALLEL LOOP PRIVATE(index) ASYNC(7)
     DO j=x_min-depth,x_max+x_inc+depth
       DO k=1,depth
         index=j+depth+(k-1)*(x_max+x_inc+(2*depth))
@@ -199,8 +200,8 @@ SUBROUTINE unpack_top_bottom_buffers(x_min,x_max,y_min,y_max,             &
   IF(chunk_top.NE.external_face) THEN
 !$ACC DATA &
 !$ACC PRESENT(top_rcv_buffer,field)
-!$ACC UPDATE DEVICE (top_rcv_buffer(1:size))
-!$ACC PARALLEL LOOP PRIVATE(index)
+!$ACC UPDATE DEVICE (top_rcv_buffer(1:size)) ASYNC(8)
+!$ACC PARALLEL LOOP PRIVATE(index) ASYNC(8)
     DO j=x_min-depth,x_max+x_inc+depth
       DO k=1,depth
         index=j+depth+(k-1)*(x_max+x_inc+(2*depth))
@@ -210,6 +211,7 @@ SUBROUTINE unpack_top_bottom_buffers(x_min,x_max,y_min,y_max,             &
 !$ACC END PARALLEL LOOP
 !$ACC END DATA
   ENDIF
+!$ACC WAIT
 
 END SUBROUTINE unpack_top_bottom_buffers
 
