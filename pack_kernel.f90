@@ -97,9 +97,9 @@ SUBROUTINE unpack_left_right_buffers(x_min,x_max,y_min,y_max,              &
         field(x_min-j,k)=left_rcv_buffer(index)
       ENDDO
     ENDDO
-  ENDIF
 !$ACC END PARALLEL LOOP
 !$ACC END DATA
+  ENDIF
   IF(chunk_right.NE.external_face) THEN
 !$ACC DATA &
 !$ACC PRESENT(right_rcv_buffer,field)
