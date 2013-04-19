@@ -59,7 +59,7 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
 !$ACC PRESENT(xvel1,yvel1)   &
 !$ACC PRESENT(stepbymass)
 
-!$ACC PARALLEL LOOP PRIVATE(nodal_mass)
+!$ACC PARALLEL LOOP PRIVATE(nodal_mass) VECTOR_LENGTH(1024)
   DO k=y_min,y_max+1
     DO j=x_min,x_max+1
 
@@ -75,7 +75,7 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
   ENDDO
 !$ACC END PARALLEL LOOP
 
-!$ACC PARALLEL LOOP ASYNC(1)
+!$ACC PARALLEL LOOP ASYNC(1) VECTOR_LENGTH(1024)
   DO k=y_min,y_max+1
     DO j=x_min,x_max+1
 
@@ -85,8 +85,8 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
   ENDDO
 !$ACC END PARALLEL LOOP
 
-!$ACC PARALLEL LOOP ASYNC(2)
-  DO k=y_min,y_max+1
+!$ACC PARALLEL LOOP ASYNC(2) VECTOR_LENGTH(1024)
+  DO k=y_min,y_max+1 
     DO j=x_min,x_max+1
 
       yvel1(j,k)=yvel0(j,k)-stepbymass(j,k)*(yarea(j  ,k  )*(pressure(j  ,k  )-pressure(j  ,k-1))    &
@@ -96,7 +96,7 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
   ENDDO
 !$ACC END PARALLEL LOOP
 
-!$ACC PARALLEL LOOP ASYNC(1)
+!$ACC PARALLEL LOOP ASYNC(1) VECTOR_LENGTH(1024)
   DO k=y_min,y_max+1
     DO j=x_min,x_max+1
 
@@ -106,8 +106,8 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
     ENDDO
   ENDDO
 !$ACC END PARALLEL LOOP
-
-!$ACC PARALLEL LOOP ASYNC(2)
+ 
+!$ACC PARALLEL LOOP ASYNC(2) VECTOR_LENGTH(1024)
   DO k=y_min,y_max+1
     DO j=x_min,x_max+1
 
@@ -117,7 +117,7 @@ SUBROUTINE accelerate_kernel(x_min,x_max,y_min,y_max,dt,     &
     ENDDO
   ENDDO
 !$ACC END PARALLEL LOOP
-!!$ACC WAIT
+!$ACC WAIT
 
 !$ACC END DATA
 

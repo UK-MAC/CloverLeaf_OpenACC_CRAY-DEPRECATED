@@ -16,7 +16,7 @@
 ! CloverLeaf. If not, see http://www.gnu.org/licenses/.
 
 !>  @brief Communication Utilities
-!>  @author Wayne Gaudin, Andy Herdman
+!>  @author Wayne Gaudin
 !>  @details Contains all utilities required to run CloverLeaf in a distributed
 !>  environment, including initialisation, mesh decompostion, reductions and
 !>  halo exchange using explicit buffers.
@@ -59,6 +59,7 @@ SUBROUTINE clover_finalize
 
   INTEGER :: err
 
+  CLOSE(g_out)
   CALL FLUSH(0)
   CALL FLUSH(6)
   CALL FLUSH(g_out)
@@ -113,10 +114,10 @@ SUBROUTINE clover_decompose(x_cells,y_cells,left,right,bottom,top)
 
   IMPLICIT NONE
 
-  INTEGER :: x_cells,y_cells,left(:),right(:),top(:),bottom(:),dims(2)
+  INTEGER :: x_cells,y_cells,left(:),right(:),top(:),bottom(:)
   INTEGER :: c,delta_x,delta_y
 
-  REAL(KIND=8) :: mesh_ratio,a,b,factor_x,factor_y
+  REAL(KIND=8) :: mesh_ratio,factor_x,factor_y
   INTEGER  :: chunk_x,chunk_y,mod_x,mod_y,split_found
 
   INTEGER  :: cx,cy,chunk,add_x,add_y,add_x_prev,add_y_prev
@@ -202,7 +203,7 @@ SUBROUTINE clover_allocate_buffers(chunk)
   IMPLICIT NONE
 
   INTEGER      :: chunk
-
+  
   ! Unallocated buffers for external boundaries caused issues on some systems so they are now
   !  all allocated
   IF(parallel%task.EQ.chunks(chunk)%task)THEN
@@ -444,6 +445,8 @@ SUBROUTINE clover_exchange_message(chunk,field,                            &
                                    top_rcv_buffer,                         &
                                    depth,field_type)
 
+  USE pack_kernel_module
+
   IMPLICIT NONE
 
   REAL(KIND=8) :: field(-1:,-1:) ! This seems to work for any type of mesh data
@@ -452,11 +455,9 @@ SUBROUTINE clover_exchange_message(chunk,field,                            &
 
   INTEGER      :: chunk,depth,field_type
 
-  INTEGER      :: size,err,target,request(8),tag,message_count,j,k,x_inc,y_inc,index
+  INTEGER      :: size,err,request(8),tag,message_count,j,k,x_inc,y_inc,index
   INTEGER      :: status(MPI_STATUS_SIZE,8)
   INTEGER      :: receiver,sender
-
-  INTEGER      :: loc_x_min, loc_x_max, loc_y_min, loc_y_max
 
   ! Field type will either be cell, vertex, x_face or y_face to get the message limits correct
 
@@ -496,46 +497,29 @@ SUBROUTINE clover_exchange_message(chunk,field,                            &
     y_inc=1
   ENDIF
 
-loc_x_min=chunks(chunk)%field%x_min
-loc_x_max=chunks(chunk)%field%x_max
-loc_y_min=chunks(chunk)%field%y_min
-loc_y_max=chunks(chunk)%field%y_max
-
   ! Pack real data into buffers
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
+    size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
+    IF(use_fortran_kernels) THEN
+      CALL pack_left_right_buffers(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                   chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                   chunks(chunk)%chunk_neighbours(chunk_left),          &
+                                   chunks(chunk)%chunk_neighbours(chunk_right),         &
+                                   external_face,                                       &
+                                   x_inc,y_inc,depth,size,                              &
+                                   field,left_snd_buffer,right_snd_buffer)
+    ELSEIF(use_C_kernels)THEN
+      CALL pack_left_right_buffers_c(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                     chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                     chunks(chunk)%chunk_neighbours(chunk_left),          &
+                                     chunks(chunk)%chunk_neighbours(chunk_right),         &
+                                     external_face,                                       &
+                                     x_inc,y_inc,depth,size,                              &
+                                     field,left_snd_buffer,right_snd_buffer)
+    ENDIF
+
+    ! Send/receive the data
     IF(chunks(chunk)%chunk_neighbours(chunk_left).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
-!$ACC DATA &
-!$ACC PRESENT(left_snd_buffer,field)
-!$ACC PARALLEL LOOP ASYNC(1)
-      DO k=loc_y_min-depth,loc_y_max+y_inc+depth
-        DO j=1,depth
-          index=j+(k+depth-1)*depth
-          left_snd_buffer(index)=field(loc_x_min+x_inc-1+j,k)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (left_snd_buffer(1:size)) ASYNC(1)
-!$ACC END DATA
-endif
-     IF(chunks(chunk)%chunk_neighbours(chunk_right).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
-!$ACC DATA &
-!$ACC PRESENT(right_snd_buffer,field)
-!$ACC PARALLEL LOOP ASYNC(2)
-      DO k=loc_y_min-depth,loc_y_max+y_inc+depth
-        DO j=1,depth
-          index=j+(k+depth-1)*depth
-          right_snd_buffer(index)=field(loc_x_max+1-j,k)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (right_snd_buffer(1:size)) ASYNC(2)
-!$ACC END DATA
-    endif
-  IF(chunks(chunk)%chunk_neighbours(chunk_left).NE.external_face) THEN
-     size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
-!$ACC WAIT(1)
       tag=4*(chunk)+1 ! 4 because we have 4 faces, 1 because it is leaving the left face
       receiver=chunks(chunks(chunk)%chunk_neighbours(chunk_left))%task
       CALL MPI_ISEND(left_snd_buffer,size,MPI_DOUBLE_PRECISION,receiver,tag &
@@ -547,9 +531,7 @@ endif
       message_count=message_count+2
     ENDIF
 
-   IF(chunks(chunk)%chunk_neighbours(chunk_right).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%y_max+y_inc+depth)-(chunks(chunk)%field%y_min-depth))*depth
-!$ACC WAIT(2)
+    IF(chunks(chunk)%chunk_neighbours(chunk_right).NE.external_face) THEN
       tag=4*chunk+2 ! 4 because we have 4 faces, 2 because it is leaving the right face
       receiver=chunks(chunks(chunk)%chunk_neighbours(chunk_right))%task
       CALL MPI_ISEND(right_snd_buffer,size,MPI_DOUBLE_PRECISION,receiver,tag &
@@ -563,60 +545,55 @@ endif
   ENDIF
 
   ! Wait for the messages
-
   CALL MPI_WAITALL(message_count,request,status,err)
 
   ! Unpack buffers in halo cells
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
-    IF(chunks(chunk)%chunk_neighbours(chunk_left).NE.external_face) THEN
-!$ACC DATA &
-!$ACC PRESENT(left_rcv_buffer,field)
-!$ACC UPDATE DEVICE (left_rcv_buffer(1:size)) ASYNC(3)
-!$ACC PARALLEL LOOP ASYNC(3)
-      DO k=loc_y_min-depth,loc_y_max+y_inc+depth
-        DO j=1,depth
-          index=j+(k+depth-1)*depth
-          field(loc_x_min-j,k)=left_rcv_buffer(index)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC END DATA
+    IF(use_fortran_kernels) THEN
+      CALL unpack_left_right_buffers(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                     chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                     chunks(chunk)%chunk_neighbours(chunk_left),          &
+                                     chunks(chunk)%chunk_neighbours(chunk_right),         &
+                                     external_face,                                       &
+                                     x_inc,y_inc,depth,size,                              &
+                                     field,left_rcv_buffer,right_rcv_buffer)
+    ELSEIF(use_C_kernels)THEN
+      CALL unpack_left_right_buffers_c(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                       chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                       chunks(chunk)%chunk_neighbours(chunk_left),          &
+                                       chunks(chunk)%chunk_neighbours(chunk_right),         &
+                                       external_face,                                       &
+                                       x_inc,y_inc,depth,size,                              &
+                                       field,left_rcv_buffer,right_rcv_buffer)
     ENDIF
-    IF(chunks(chunk)%chunk_neighbours(chunk_right).NE.external_face) THEN
-!$ACC DATA &
-!$ACC PRESENT(right_rcv_buffer,field)
-!$ACC UPDATE DEVICE (right_rcv_buffer(1:size)) ASYNC(4)
-!$ACC PARALLEL LOOP ASYNC(4)
-      DO k=loc_y_min-depth,loc_y_max+y_inc+depth
-        DO j=1,depth
-          index=j+(k+depth-1)*depth
-          field(loc_x_max+x_inc+j,k)=right_rcv_buffer(index)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC END DATA
-    ENDIF
-!$ACC WAIT
   ENDIF
 
   request=0
   message_count=0
 
+  ! Pack real data into buffers
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
+    size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
+    IF(use_fortran_kernels) THEN
+      CALL pack_top_bottom_buffers(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                   chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                   chunks(chunk)%chunk_neighbours(chunk_bottom),        &
+                                   chunks(chunk)%chunk_neighbours(chunk_top),           &
+                                   external_face,                                       &
+                                   x_inc,y_inc,depth,size,                              &
+                                   field,bottom_snd_buffer,top_snd_buffer)
+    ELSEIF(use_C_kernels)THEN
+      CALL pack_top_bottom_buffers_c(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                     chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                     chunks(chunk)%chunk_neighbours(chunk_bottom),        &
+                                     chunks(chunk)%chunk_neighbours(chunk_top),           &
+                                     external_face,                                       &
+                                     x_inc,y_inc,depth,size,                              &
+                                     field,bottom_snd_buffer,top_snd_buffer)
+    ENDIF
+
+    ! Send/receive the data
     IF(chunks(chunk)%chunk_neighbours(chunk_bottom).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
-!$ACC DATA &
-!$ACC PRESENT(bottom_snd_buffer,field)
-!$ACC PARALLEL LOOP
-      DO k=1,depth
-        DO j=loc_x_min-depth,loc_x_max+x_inc+depth
-          index=j+depth+(k-1)*(loc_x_max+x_inc+(2*depth))
-          bottom_snd_buffer(index)=field(j,loc_y_min+y_inc-1+k)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (bottom_snd_buffer(1:size))
-!$ACC END DATA
       tag=4*(chunk)+3 ! 4 because we have 4 faces, 3 because it is leaving the bottom face
       receiver=chunks(chunks(chunk)%chunk_neighbours(chunk_bottom))%task
       CALL MPI_ISEND(bottom_snd_buffer,size,MPI_DOUBLE_PRECISION,receiver,tag &
@@ -629,19 +606,6 @@ endif
     ENDIF
 
     IF(chunks(chunk)%chunk_neighbours(chunk_top).NE.external_face) THEN
-      size=(1+(chunks(chunk)%field%x_max+x_inc+depth)-(chunks(chunk)%field%x_min-depth))*depth
-!$ACC DATA &
-!$ACC PRESENT(top_snd_buffer,field)
-!$ACC PARALLEL LOOP
-      DO k=1,depth
-        DO j=loc_x_min-depth,loc_x_max+x_inc+depth
-          index=j+depth+(k-1)*(loc_x_max+x_inc+(2*depth))
-          top_snd_buffer(index)=field(j,loc_y_max+1-k)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC UPDATE HOST (top_snd_buffer(1:size))
-!$ACC END DATA
       tag=4*(chunk)+4 ! 4 because we have 4 faces, 4 because it is leaving the top face
       receiver=chunks(chunks(chunk)%chunk_neighbours(chunk_top))%task
       CALL MPI_ISEND(top_snd_buffer,size,MPI_DOUBLE_PRECISION,receiver,tag &
@@ -652,42 +616,33 @@ endif
                      MPI_COMM_WORLD,request(message_count+2),err)
       message_count=message_count+2
     ENDIF
+
   ENDIF
 
   ! Wait for the messages
-
   CALL MPI_WAITALL(message_count,request,status,err)
+
   ! Unpack buffers in halo cells
   IF(parallel%task.EQ.chunks(chunk)%task) THEN
-    IF(chunks(chunk)%chunk_neighbours(chunk_bottom).NE.external_face) THEN
-!$ACC DATA &
-!$ACC PRESENT(bottom_rcv_buffer,field)
-!$ACC UPDATE DEVICE (bottom_rcv_buffer(1:size))
-!$ACC PARALLEL LOOP
-      DO k=1,depth
-        DO j=loc_x_min-depth,loc_x_max+x_inc+depth
-          index=j+depth+(k-1)*(loc_x_max+x_inc+(2*depth))
-          field(j,loc_y_min-k)=bottom_rcv_buffer(index)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC END DATA
-    ENDIF
-    IF(chunks(chunk)%chunk_neighbours(chunk_top).NE.external_face) THEN
-!$ACC DATA &
-!$ACC PRESENT(top_rcv_buffer,field)
-!$ACC UPDATE DEVICE (top_rcv_buffer(1:size))
-!$ACC PARALLEL LOOP
-      DO k=1,depth
-        DO j=loc_x_min-depth,loc_x_max+x_inc+depth
-          index=j+depth+(k-1)*(loc_x_max+x_inc+(2*depth))
-          field(j,loc_y_max+y_inc+k)=top_rcv_buffer(index)
-        ENDDO
-      ENDDO
-!$ACC END PARALLEL LOOP
-!$ACC END DATA
+    IF(use_fortran_kernels) THEN
+      CALL unpack_top_bottom_buffers(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                     chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                     chunks(chunk)%chunk_neighbours(chunk_bottom),        &
+                                     chunks(chunk)%chunk_neighbours(chunk_top),           &
+                                     external_face,                                       &
+                                     x_inc,y_inc,depth,size,                              &
+                                     field,bottom_rcv_buffer,top_rcv_buffer)
+    ELSEIF(use_C_kernels)THEN
+      CALL unpack_top_bottom_buffers_c(chunks(chunk)%field%x_min,chunks(chunk)%field%x_max, &
+                                       chunks(chunk)%field%y_min,chunks(chunk)%field%y_max, &
+                                       chunks(chunk)%chunk_neighbours(chunk_bottom),        &
+                                       chunks(chunk)%chunk_neighbours(chunk_top),           &
+                                       external_face,                                       &
+                                       x_inc,y_inc,depth,size,                              &
+                                       field,bottom_rcv_buffer,top_rcv_buffer)
     ENDIF
   ENDIF
+
 END SUBROUTINE clover_exchange_message
 
 SUBROUTINE clover_sum(value)
@@ -727,6 +682,40 @@ SUBROUTINE clover_min(value)
   value=minimum
 
 END SUBROUTINE clover_min
+
+SUBROUTINE clover_max(value)
+
+  IMPLICIT NONE
+
+  REAL(KIND=8) :: value
+
+  REAL(KIND=8) :: maximum
+
+  INTEGER :: err
+
+  maximum=value
+
+  CALL MPI_ALLREDUCE(value,maximum,1,MPI_DOUBLE_PRECISION,MPI_MAX,MPI_COMM_WORLD,err)
+
+  value=maximum
+
+END SUBROUTINE clover_max
+
+SUBROUTINE clover_allgather(value,values)
+
+  IMPLICIT NONE
+
+  REAL(KIND=8) :: value
+
+  REAL(KIND=8) :: values(parallel%max_task)
+
+  INTEGER :: err
+
+  values(1)=value ! Just to ensure it will work in serial
+
+  CALL MPI_ALLGATHER(value,1,MPI_DOUBLE_PRECISION,values,1,MPI_DOUBLE_PRECISION,MPI_COMM_WORLD,err)
+
+END SUBROUTINE clover_allgather
 
 SUBROUTINE clover_check_error(error)
 

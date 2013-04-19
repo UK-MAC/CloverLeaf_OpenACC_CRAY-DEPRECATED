@@ -92,20 +92,23 @@ CONTAINS
 !$ACC PRESENT(density0,energy0,pressure,viscosity,soundspeed,density1,energy1,xvel0,yvel0,xvel1,yvel1,vol_flux_x,mass_flux_x,vol_flux_y,mass_flux_y)
 
   ! Update values in external halo cells based on depth and fields requested
+  ! Even though half of these loops look the wrong way around, it should be noted
+  ! that depth is either 1 or 2 so that it is more efficient to always thread
+  ! loop along the mesh edge.
   IF(fields(FIELD_DENSITY0).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           density0(j,1-k)=density0(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           density0(j,y_max+k)=density0(j,y_max+1-k)
         ENDDO
       ENDDO
@@ -121,7 +124,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           density0(x_max+j,k)=density0(x_max+1-j,k)
@@ -133,25 +136,25 @@ CONTAINS
 
   IF(fields(FIELD_DENSITY1).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           density1(j,1-k)=density1(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           density1(j,y_max+k)=density1(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           density1(1-j,k)=density1(0+j,k)
@@ -160,7 +163,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           density1(x_max+j,k)=density1(x_max+1-j,k)
@@ -172,25 +175,25 @@ CONTAINS
 
   IF(fields(FIELD_ENERGY0).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           energy0(j,1-k)=energy0(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           energy0(j,y_max+k)=energy0(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           energy0(1-j,k)=energy0(0+j,k)
@@ -199,7 +202,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           energy0(x_max+j,k)=energy0(x_max+1-j,k)
@@ -211,18 +214,18 @@ CONTAINS
 
   IF(fields(FIELD_ENERGY1).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           energy1(j,1-k)=energy1(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           energy1(j,y_max+k)=energy1(j,y_max+1-k)
         ENDDO
       ENDDO
@@ -250,25 +253,25 @@ CONTAINS
 
   IF(fields(FIELD_PRESSURE).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           pressure(j,1-k)=pressure(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           pressure(j,y_max+k)=pressure(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           pressure(1-j,k)=pressure(0+j,k)
@@ -289,18 +292,18 @@ CONTAINS
 
   IF(fields(FIELD_VISCOSITY).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           viscosity(j,1-k)=viscosity(j,0+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           viscosity(j,y_max+k)=viscosity(j,y_max+1-k)
         ENDDO
       ENDDO
@@ -328,25 +331,25 @@ CONTAINS
 
   IF(fields(FIELD_XVEL0).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           xvel0(j,1-k)=xvel0(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           xvel0(j,y_max+1+k)=xvel0(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           xvel0(1-j,k)=-xvel0(1+j,k)
@@ -355,7 +358,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           xvel0(x_max+1+j,k)=-xvel0(x_max+1-j,k)
@@ -367,25 +370,25 @@ CONTAINS
 
   IF(fields(FIELD_XVEL1).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           xvel1(j,1-k)=xvel1(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           xvel1(j,y_max+1+k)=xvel1(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           xvel1(1-j,k)=-xvel1(1+j,k)
@@ -394,7 +397,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           xvel1(x_max+1+j,k)=-xvel1(x_max+1-j,k)
@@ -406,25 +409,25 @@ CONTAINS
 
   IF(fields(FIELD_YVEL0).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           yvel0(j,1-k)=-yvel0(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           yvel0(j,y_max+1+k)=-yvel0(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           yvel0(1-j,k)=yvel0(1+j,k)
@@ -433,7 +436,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           yvel0(x_max+1+j,k)=yvel0(x_max+1-j,k)
@@ -445,25 +448,25 @@ CONTAINS
 
   IF(fields(FIELD_YVEL1).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           yvel1(j,1-k)=-yvel1(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           yvel1(j,y_max+1+k)=-yvel1(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP GANG WORKER VECTOR !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           yvel1(1-j,k)=yvel1(1+j,k)
@@ -472,7 +475,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP GANG WORKER VECTOR !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           yvel1(x_max+1+j,k)=yvel1(x_max+1-j,k)
@@ -484,25 +487,25 @@ CONTAINS
 
   IF(fields(FIELD_VOL_FLUX_X).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           vol_flux_x(j,1-k)=vol_flux_x(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           vol_flux_x(j,y_max+k)=vol_flux_x(j,y_max-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           vol_flux_x(1-j,k)=-vol_flux_x(1+j,k)
@@ -511,7 +514,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           vol_flux_x(x_max+j+1,k)=-vol_flux_x(x_max+1-j,k)
@@ -523,25 +526,25 @@ CONTAINS
 
   IF(fields(FIELD_MASS_FLUX_X).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           mass_flux_x(j,1-k)=mass_flux_x(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+1+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+1+depth
+        DO k=1,depth
           mass_flux_x(j,y_max+k)=mass_flux_x(j,y_max-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           mass_flux_x(1-j,k)=-mass_flux_x(1+j,k)
@@ -550,7 +553,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           mass_flux_x(x_max+j+1,k)=-mass_flux_x(x_max+1-j,k)
@@ -562,25 +565,25 @@ CONTAINS
 
   IF(fields(FIELD_VOL_FLUX_Y).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           vol_flux_y(j,1-k)=-vol_flux_y(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           vol_flux_y(j,y_max+k+1)=-vol_flux_y(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           vol_flux_y(1-j,k)=vol_flux_y(1+j,k)
@@ -589,7 +592,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           vol_flux_y(x_max+j,k)=vol_flux_y(x_max-j,k)
@@ -601,25 +604,25 @@ CONTAINS
 
   IF(fields(FIELD_MASS_FLUX_Y).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           mass_flux_y(j,1-k)=-mass_flux_y(j,1+k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
-      DO k=1,depth
-        DO j=x_min-depth,x_max+depth
+!$ACC PARALLEL LOOP
+      DO j=x_min-depth,x_max+depth
+        DO k=1,depth
           mass_flux_y(j,y_max+k+1)=-mass_flux_y(j,y_max+1-k)
         ENDDO
       ENDDO
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           mass_flux_y(1-j,k)=mass_flux_y(1+j,k)
@@ -628,7 +631,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+1+depth
         DO j=1,depth
           mass_flux_y(x_max+j,k)=mass_flux_y(x_max-j,k)
