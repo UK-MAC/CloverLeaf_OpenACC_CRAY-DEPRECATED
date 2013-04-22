@@ -87,7 +87,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
   IF(dir.EQ.g_xdir) THEN
 
     IF(sweep_number.EQ.1)THEN
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
       DO k=y_min-2,y_max+2
         DO j=x_min-2,x_max+2
           pre_vol(j,k)=volume(j,k)+(vol_flux_x(j+1,k  )-vol_flux_x(j,k)+vol_flux_y(j  ,k+1)-vol_flux_y(j,k))
@@ -96,7 +96,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
       ENDDO 
 !$ACC END PARALLEL LOOP
     ELSE
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
       DO k=y_min-2,y_max+2
         DO j=x_min-2,x_max+2
           pre_vol(j,k)=volume(j,k)+vol_flux_x(j+1,k)-vol_flux_x(j,k)
@@ -156,7 +156,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
     ENDDO
 !$ACC END PARALLEL LOOP
 
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
     DO k=y_min,y_max
       DO j=x_min,x_max
         pre_mass(j,k)=density1(j,k)*pre_vol(j,k)
@@ -172,7 +172,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
   ELSEIF(dir.EQ.g_ydir) THEN
 
     IF(sweep_number.EQ.1)THEN
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
       DO k=y_min-2,y_max+2
         DO j=x_min-2,x_max+2
           pre_vol(j,k)=volume(j,k)+(vol_flux_y(j  ,k+1)-vol_flux_y(j,k)+vol_flux_x(j+1,k  )-vol_flux_x(j,k))
@@ -181,7 +181,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
       ENDDO
 !$ACC END PARALLEL LOOP
     ELSE
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
       DO k=y_min-2,y_max+2
         DO j=x_min-2,x_max+2
           pre_vol(j,k)=volume(j,k)+vol_flux_y(j  ,k+1)-vol_flux_y(j,k)
@@ -240,7 +240,7 @@ SUBROUTINE advec_cell_kernel(x_min,       &
     ENDDO
 !$ACC END PARALLEL LOOP
 
-!$ACC PARALLEL LOOP
+!$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
     DO k=y_min,y_max
       DO j=x_min,x_max
         pre_mass(j,k)=density1(j,k)*pre_vol(j,k)
