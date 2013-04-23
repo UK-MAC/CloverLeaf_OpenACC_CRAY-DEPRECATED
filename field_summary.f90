@@ -96,16 +96,13 @@ SUBROUTINE field_summary()
   IF(profiler_on) profiler%summary=profiler%summary+(timer()-kernel_time)
 
   IF(parallel%boss) THEN
-!$  IF(OMP_GET_THREAD_NUM().EQ.0) THEN
       WRITE(g_out,'(a6,i7,7e16.4)')' step:',step,vol,mass,mass/vol,press/vol,ie,ke,ie+ke
       WRITE(g_out,*)
-!$  ENDIF
    ENDIF
 
   !Check if this is the final call and if it is a test problem, check the result.
   IF(complete) THEN
     IF(parallel%boss) THEN
-!$    IF(OMP_GET_THREAD_NUM().EQ.0) THEN
         IF(test_problem.EQ.1) THEN
           qa_diff=ABS((100.0_8*(ke/1.82280367310258_8))-100.0_8)
           WRITE(*,*)"Test problem 1 is within",qa_diff,"% of the expected solution"
@@ -118,7 +115,6 @@ SUBROUTINE field_summary()
             WRITE(g_out,*)"This is test is considered NOT PASSED"
           ENDIF
         ENDIF
-!$    ENDIF
     ENDIF
   ENDIF
 
