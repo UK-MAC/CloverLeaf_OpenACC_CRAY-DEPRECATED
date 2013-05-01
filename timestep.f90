@@ -51,6 +51,7 @@ SUBROUTINE timestep()
 
   INTEGER :: fields(NUM_FIELDS)
 
+
   dt    = g_big
   small=0
 
