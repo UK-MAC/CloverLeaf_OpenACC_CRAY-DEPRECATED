@@ -305,7 +305,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           viscosity(1-j,k)=viscosity(0+j,k)
@@ -314,7 +314,7 @@ CONTAINS
 !$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
-!$ACC PARALLEL LOOP !COLLAPSE(2)
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           viscosity(x_max+j,k)=viscosity(x_max+1-j,k)
@@ -325,32 +325,40 @@ CONTAINS
 
   IF(fields(FIELD_SOUNDSPEED).EQ.1) THEN
     IF(chunk_neighbours(CHUNK_BOTTOM).EQ.EXTERNAL_FACE) THEN
+!$ACC PARALLEL LOOP
       DO j=x_min-depth,x_max+depth
         DO k=1,depth
           soundspeed(j,1-k)=soundspeed(j,0+k)
         ENDDO
       ENDDO
+!$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_TOP).EQ.EXTERNAL_FACE) THEN
+!$ACC PARALLEL LOOP
       DO j=x_min-depth,x_max+depth
         DO k=1,depth
           soundspeed(j,y_max+k)=soundspeed(j,y_max+1-k)
         ENDDO
       ENDDO
+!$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_LEFT).EQ.EXTERNAL_FACE) THEN
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           soundspeed(1-j,k)=soundspeed(0+j,k)
         ENDDO
       ENDDO
+!$ACC END PARALLEL LOOP
     ENDIF
     IF(chunk_neighbours(CHUNK_RIGHT).EQ.EXTERNAL_FACE) THEN
+!$ACC PARALLEL LOOP
       DO k=y_min-depth,y_max+depth
         DO j=1,depth
           soundspeed(x_max+j,k)=soundspeed(x_max+1-j,k)
         ENDDO
       ENDDO
+!$ACC END PARALLEL LOOP
     ENDIF
   ENDIF
 
