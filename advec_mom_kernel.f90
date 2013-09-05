@@ -46,14 +46,12 @@ SUBROUTINE advec_mom_kernel(x_min,x_max,y_min,y_max,   &
                             celldy,            &
                             which_vel,         &
                             sweep_number,      &
-                            direction,         &
-                            vector             )
+                            direction         )
 
   IMPLICIT NONE
   
   INTEGER :: x_min,x_max,y_min,y_max
   INTEGER :: which_vel,sweep_number,direction
-  LOGICAL :: vector
 
   REAL(KIND=8), TARGET,DIMENSION(x_min-2:x_max+3,y_min-2:y_max+3) :: xvel1,yvel1
   REAL(KIND=8), DIMENSION(x_min-2:x_max+3,y_min-2:y_max+2) :: mass_flux_x
@@ -77,7 +75,6 @@ SUBROUTINE advec_mom_kernel(x_min,x_max,y_min,y_max,   &
   INTEGER :: upwind,donor,downwind,dif
   REAL(KIND=8) :: sigma,wind,width
   REAL(KIND=8) :: vdiffuw,vdiffdw,auw,adw,limiter
-  REAL(KIND=8) :: vdiffuw2,vdiffdw2,auw2,limiter2
   REAL(KIND=8), POINTER, DIMENSION(:,:) :: vel1
 
   ! Choose the correct velocity, ideally, remove this pointer
@@ -262,7 +259,6 @@ SUBROUTINE advec_mom_kernel(x_min,x_max,y_min,y_max,   &
       ENDDO
     ENDDO
 !$ACC END PARALLEL LOOP
-    ENDIF
 !$ACC PARALLEL LOOP VECTOR_LENGTH(1024)
     DO k=y_min,y_max+1
       DO j=x_min,x_max+1

@@ -59,7 +59,6 @@ void advec_mom_kernel_c_(int *xmin,int *xmax,int *ymin,int *ymax,
   int which_vel=*whch_vl;
   int sweep_number=*swp_nmbr;
   int direction=*drctn;
-  int vector=*vctr;
 
   int j,k,mom_sweep;
   int upwind,donor,downwind,dif;
