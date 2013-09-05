@@ -64,7 +64,6 @@ void advec_mom_kernel_c_(int *xmin,int *xmax,int *ymin,int *ymax,
   int upwind,donor,downwind,dif;
   double sigma,wind,width;
   double vdiffuw,vdiffdw,auw,adw,limiter;
-  double vdiffuw2,vdiffdw2,auw2,limiter2;
 
   double *vel1;
 

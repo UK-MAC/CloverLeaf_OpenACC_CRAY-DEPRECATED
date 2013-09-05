@@ -46,7 +46,7 @@ SUBROUTINE advec_mom_kernel(x_min,x_max,y_min,y_max,   &
                             celldy,            &
                             which_vel,         &
                             sweep_number,      &
-                            direction         )
+                            direction          )
 
   IMPLICIT NONE
   
